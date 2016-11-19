@@ -65,3 +65,16 @@ ggplot(vk_msd_dismissal_long, aes(x = season, y = value, fill = variable)) + #x_
   ggtitle("Kohli vs Dhoni -- Dismissals by Seasons") +
   labs(x = "Season", y = "Dismissals")
 
+#Share of runs made
+ggplot(msd, aes(x = factor(1), fill = factor(total_runs))) + geom_bar(width = 1)+
+  coord_polar(theta = "y")+
+  ggtitle("Dhoni's Run Share")+
+  labs(x = "",y = "")+
+  scale_fill_discrete(guide_legend(title = "Run Color"))
+
+ggplot(vk, aes(x = factor(1), fill = factor(total_runs))) + geom_bar(width = 1)+
+  coord_polar(theta = "y")+
+  ggtitle("Kohli's Run Share")+
+  labs(x="", y="")+
+  scale_fill_discrete(guide_legend(title = "Run Color"))
+  
