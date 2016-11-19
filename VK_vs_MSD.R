@@ -29,4 +29,6 @@ library(reshape2)
 vk_msd_season_long = melt(vk_msd_season) #Transforms the data frame to one, with dhoni/kohli as factors
 ggplot(vk_msd_season_long, aes(x = season, y = value, fill = variable)) + #x_axis is season, y_axis is value(runs), diff_factor is variable(kohli/dhoni)
   geom_bar(stat="identity", position = "dodge") + #dodge means place bars side-to-side
-  scale_fill_manual(values = c("red","yellow")) #scale_fill_manual for barplots, scale_color_manual for line/scatter plots
+  scale_fill_manual(values = c("red","yellow")) + #scale_fill_manual for barplots, scale_color_manual for line/scatter plots
+  ggtitle("Kohli vs Dhoni -- Runs by Seasons") +
+  labs(x = "Season", y = "Runs")
