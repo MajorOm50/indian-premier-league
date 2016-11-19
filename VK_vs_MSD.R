@@ -50,3 +50,18 @@ ggplot(msd_dismissal_long, aes(x = season, y = ..count.. , fill = dismissal_kind
   ggtitle("Dhoni -- Dismissals by Seasons") +
   labs(x = "Season", y = "Dismissal Kind")+
   scale_fill_brewer(palette = "Set2")
+
+#Dismissal counts -- by seasons
+vk_dismissal_count = as.data.frame(table(vk_dismissal$season))
+colnames(vk_dismissal_count) = c("season", "vk_dismissal")
+msd_dismissal_count = as.data.frame(table(msd_dismissal$season))
+colnames(msd_dismissal_count) = c("season", "msd_dismissal")
+vk_msd_dismissal = merge(vk_dismissal_count, msd_dismissal_count)
+
+vk_msd_dismissal_long = melt(vk_msd_dismissal)
+ggplot(vk_msd_dismissal_long, aes(x = season, y = value, fill = variable)) + #x_axis is season, y_axis is value(runs), diff_factor is variable(kohli/dhoni)
+  geom_bar(stat="identity", position = "dodge") + #dodge means place bars side-to-side
+  scale_fill_manual(values = c("red","yellow")) + #scale_fill_manual for barplots, scale_color_manual for line/scatter plots
+  ggtitle("Kohli vs Dhoni -- Dismissals by Seasons") +
+  labs(x = "Season", y = "Dismissals")
+
