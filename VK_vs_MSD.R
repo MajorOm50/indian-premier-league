@@ -138,3 +138,11 @@ head(msd_fav_non_striker[with(msd_fav_non_striker, order(-batsman_runs)),])
 
 vk_fav_non_striker = aggregate(batsman_runs ~ non_striker, data = vk, FUN = sum)
 head(vk_fav_non_striker[with(vk_fav_non_striker, order(-batsman_runs)),])
+
+#Favorite Venue
+msd_fav_venue = aggregate(batsman_runs ~ venue, data = msd, FUN = sum)
+head(msd_fav_venue[with(msd_fav_venue, order(-batsman_runs)),])
+
+vk_fav_venue = aggregate(batsman_runs ~ venue, data = vk, FUN = sum)
+head(vk_fav_venue[with(vk_fav_venue, order(-batsman_runs)),])
+
