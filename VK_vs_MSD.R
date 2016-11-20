@@ -146,3 +146,35 @@ head(msd_fav_venue[with(msd_fav_venue, order(-batsman_runs)),])
 vk_fav_venue = aggregate(batsman_runs ~ venue, data = vk, FUN = sum)
 head(vk_fav_venue[with(vk_fav_venue, order(-batsman_runs)),])
 
+
+#Pacing the innings
+vk_over_runs = aggregate(batsman_runs ~ over, data = vk, FUN = sum)
+vk_overs_faced = as.data.frame(table(vk$over))
+colnames(vk_overs_faced) = c("over", "vk_freq")
+vk_over_runs = merge(vk_over_runs, vk_overs_faced)
+vk_over_runs$vk_strike_rate = (vk_over_runs$batsman_runs/vk_over_runs$vk_freq)*100
+
+msd_over_runs = aggregate(batsman_runs ~ over, data = msd, FUN = sum)
+msd_overs_faced = as.data.frame(table(msd$over))
+colnames(msd_overs_faced) = c("over", "msd_freq")
+msd_over_runs = merge(msd_over_runs, msd_overs_faced)
+msd_over_runs$msd_strike_rate = (msd_over_runs$batsman_runs/msd_over_runs$msd_freq)*100
+
+vk_msd_strike_rate = merge(vk_over_runs[,c("over", "vk_strike_rate")], msd_over_runs[,c("over", "msd_strike_rate")])
+vk_msd_strike_rate$over = as.factor(vk_msd_strike_rate$over)
+vk_msd_strike_rate_long = melt(vk_msd_strike_rate)
+ggplot(vk_msd_strike_rate_long, aes(over, value, group = variable, col = variable)) + 
+  geom_point() + geom_smooth()+
+  ggtitle("Kohli vs Dhoni -- Strike Rate by Over") +
+  labs(x = "Over", y = "Strike Rate")
+
+
+
+vk_msd_freq = merge(vk_over_runs[,c("over", "vk_freq")], msd_over_runs[,c("over", "msd_freq")])
+vk_msd_freq$over = as.factor(vk_msd_freq$over)
+vk_msd_freq_long = melt(vk_msd_freq)
+ggplot(vk_msd_freq_long, aes(over, value, group = variable, col = variable)) + 
+  geom_point() + geom_smooth()+
+  ggtitle("Kohli vs Dhoni -- Number of Overs faced") +
+  labs(x = "Over", y = "Count")
+
