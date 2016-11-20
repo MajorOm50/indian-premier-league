@@ -107,3 +107,34 @@ msd_fav_team = merge(msd_fav_team, msd_balls_faced)
 msd_fav_team$average_against_team = msd_fav_team$batsman_runs/msd_fav_team$balls_faced
 msd_fav_team[with(msd_fav_team, order(-average_against_team)),c("opposition", "average_against_team")]
 
+#Favorite/Worst bowler
+vk_fav_bowler = aggregate(batsman_runs ~ bowler, data = vk, FUN = sum)
+
+vk_balls_faced_bowler = as.data.frame(table(vk$bowler))
+colnames(vk_balls_faced_bowler) = c("bowler", "balls_faced")
+vk_fav_bowler = merge(vk_fav_bowler, vk_balls_faced_bowler)
+
+vk_fav_bowler = subset(vk_fav_bowler, vk_fav_bowler$balls_faced >= 20) #Take only bowlers who've bowled more than 20 deliveries
+
+vk_fav_bowler$average_against_bowler = vk_fav_bowler$batsman_runs/vk_fav_bowler$balls_faced
+head(vk_fav_bowler[with(vk_fav_bowler, order(-average_against_bowler)),c("bowler", "average_against_bowler")])
+tail(vk_fav_bowler[with(vk_fav_bowler, order(-average_against_bowler)),c("bowler", "average_against_bowler")])
+
+msd_fav_bowler = aggregate(batsman_runs ~ bowler, data = msd, FUN = sum)
+
+msd_balls_faced_bowler = as.data.frame(table(msd$bowler))
+colnames(msd_balls_faced_bowler) = c("bowler", "balls_faced")
+msd_fav_bowler = merge(msd_fav_bowler, msd_balls_faced_bowler)
+
+msd_fav_bowler = subset(msd_fav_bowler, msd_fav_bowler$balls_faced >= 20) #Take only bowlers who've bowled more than 20 deliveries
+
+msd_fav_bowler$average_against_bowler = msd_fav_bowler$batsman_runs/msd_fav_bowler$balls_faced
+head(msd_fav_bowler[with(msd_fav_bowler, order(-average_against_bowler)),c("bowler", "average_against_bowler")])
+tail(msd_fav_bowler[with(msd_fav_bowler, order(-average_against_bowler)),c("bowler", "average_against_bowler")])
+
+#Favorite Non-Striker
+msd_fav_non_striker = aggregate(batsman_runs ~ non_striker, data = msd, FUN = sum)
+head(msd_fav_non_striker[with(msd_fav_non_striker, order(-batsman_runs)),])
+
+vk_fav_non_striker = aggregate(batsman_runs ~ non_striker, data = vk, FUN = sum)
+head(vk_fav_non_striker[with(vk_fav_non_striker, order(-batsman_runs)),])
