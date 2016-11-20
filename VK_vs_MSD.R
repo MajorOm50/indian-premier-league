@@ -78,3 +78,32 @@ ggplot(vk, aes(x = factor(1), fill = factor(total_runs))) + geom_bar(width = 1)+
   labs(x="", y="")+
   scale_fill_discrete(guide_legend(title = "Run Color"))
   
+#Favorite/Worst team
+vk$opposition = vk$team1
+vk$opposition[vk$opposition == "Royal Challengers Bangalore"] = vk$team2[vk$opposition == "Royal Challengers Bangalore"]
+vk_fav_team = aggregate(batsman_runs ~ opposition, data = vk, FUN = sum)
+vk_fav_team[with(vk_fav_team, order(-batsman_runs)),]
+
+vk_balls_faced = as.data.frame(table(vk$opposition))
+colnames(vk_balls_faced) = c("opposition", "balls_faced")
+
+vk_fav_team = merge(vk_fav_team, vk_balls_faced)
+
+vk_fav_team$average_against_team = vk_fav_team$batsman_runs/vk_fav_team$balls_faced
+vk_fav_team[with(vk_fav_team, order(-average_against_team)),c("opposition", "average_against_team")]
+
+msd$opposition = msd$team1
+msd$opposition[msd$opposition == "Chennai Super Kings"] = msd$team2[msd$opposition == "Chennai Super Kings"]
+msd$opposition[msd$opposition == "Rising Pune Supergiants"] = msd$team2[msd$opposition == "Rising Pune Supergiants"]
+
+msd_fav_team = aggregate(batsman_runs ~ opposition, data = msd, FUN = sum)
+msd_fav_team[with(msd_fav_team, order(-batsman_runs)),]
+
+msd_balls_faced = as.data.frame(table(msd$opposition))
+colnames(msd_balls_faced) = c("opposition", "balls_faced")
+
+msd_fav_team = merge(msd_fav_team, msd_balls_faced)
+
+msd_fav_team$average_against_team = msd_fav_team$batsman_runs/msd_fav_team$balls_faced
+msd_fav_team[with(msd_fav_team, order(-average_against_team)),c("opposition", "average_against_team")]
+
