@@ -1,6 +1,10 @@
 library(shiny)
 library("plotly")
 
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+
 matches = read.csv("../matches.csv", stringsAsFactors = TRUE)
 deliveries = read.csv("../deliveries.csv", stringsAsFactors = TRUE)
 
@@ -8,59 +12,110 @@ df = merge(matches, deliveries, by.x = "id", by.y = "match_id")
 df$season = as.factor(df$season)
 
 vk = subset(df, df$batsman == "V Kohli")
-msd = subset(df, df$batsman == "MS Dhoni")
-
-vk_season = aggregate(batsman_runs ~ season, data = vk, FUN = sum)
-colnames(vk_season) = c("season", "runs_kohli")
-msd_season = aggregate(batsman_runs ~ season, data = msd, FUN = sum)
-colnames(msd_season) = c("season", "runs_dhoni")
-vk_msd_season = merge(vk_season, msd_season)
-
-library(ggplot2)
-library(reshape2)
-library(RColorBrewer)
-
-vk_msd_season_long = melt(vk_msd_season) #Transforms the data frame to one, with dhoni/kohli as factors
 
 vk_dismissal = subset(vk, vk$player_dismissed == "V Kohli")[,c("season", "dismissal_kind")]
 vk_dismissal_long = melt(vk_dismissal)
 
-msd_dismissal = subset(msd, msd$player_dismissed == "MS Dhoni")[,c("season", "dismissal_kind")]
-msd_dismissal_long = melt(msd_dismissal)
+vk_share = as.data.frame(table(vk$total_runs))
 
-# ggplot(msd_dismissal_long, aes(x = season, y = ..count.. , fill = dismissal_kind)) + 
-#   geom_bar(stat="count") + 
-#   ggtitle("Dhoni -- Dismissals by Seasons") +
-#   labs(x = "Season", y = "Dismissal Kind")+
-#   scale_fill_brewer(palette = "Set2")
+vk$opposition = vk$team1
+vk$opposition[vk$opposition == "Royal Challengers Bangalore"] = vk$team2[vk$opposition == "Royal Challengers Bangalore"]
+vk_fav_team = aggregate(batsman_runs ~ opposition, data = vk, FUN = sum)
+vk_fav_team[with(vk_fav_team, order(-batsman_runs)),]
+
+vk_balls_faced = as.data.frame(table(vk$opposition))
+colnames(vk_balls_faced) = c("opposition", "balls_faced")
+
+vk_fav_team = merge(vk_fav_team, vk_balls_faced)
+
+vk_fav_team$average_runs_per_ball = vk_fav_team$batsman_runs/vk_fav_team$balls_faced
+
+vk_fav_bowler = aggregate(batsman_runs ~ bowler, data = vk, FUN = sum)
+
+vk_balls_faced_bowler = as.data.frame(table(vk$bowler))
+colnames(vk_balls_faced_bowler) = c("bowler", "balls_faced")
+vk_fav_bowler = merge(vk_fav_bowler, vk_balls_faced_bowler)
+
+vk_fav_bowler = subset(vk_fav_bowler, vk_fav_bowler$balls_faced >= 20) #Consider bowlers with more than 20 deliveries
+
+vk_fav_bowler$average_against_bowler = vk_fav_bowler$batsman_runs/vk_fav_bowler$balls_faced
+
+vk_fav_non_striker = aggregate(batsman_runs ~ non_striker, data = vk, FUN = sum)
+
+vk_fav_venue = aggregate(batsman_runs ~ venue, data = vk, FUN = sum)
+
+vk_over_runs = aggregate(batsman_runs ~ over, data = vk, FUN = sum)
+vk_overs_faced = as.data.frame(table(vk$over))
+colnames(vk_overs_faced) = c("over", "vk_freq")
+vk_over_runs = merge(vk_over_runs, vk_overs_faced)
+vk_over_runs$vk_strike_rate = (vk_over_runs$batsman_runs/vk_over_runs$vk_freq)*100
+vk_over_runs$over = as.factor(vk_over_runs$over)
+vk_over_runs$batsman_runs = NULL
+vk_over_runs_long = melt(vk_over_runs)
 
 ui <- fluidPage(
   tabPanel(
     "Plot",
     fluidRow(
-  plotlyOutput("plot1"),
-  plotlyOutput("plot2"),
-  verbatimTextOutput("event")
+  plotlyOutput("dismissal_plot"),
+  # plotlyOutput("share_plot"),
+  dataTableOutput("team_list"),
+  dataTableOutput("bowler_head"),
+  dataTableOutput("bowler_tail"),
+  dataTableOutput("fav_non_striker"),
+  dataTableOutput("fav_venue"),
+  plotlyOutput("strike_rate_plot"),
+    verbatimTextOutput("event")
 )))
 
 server <- function(input, output) {
   
   # renderPlotly() also understands ggplot2 objects!
-  output$plot1 <- renderPlotly({
-    ggplot(vk_msd_season_long, aes(x = season, y = value, fill = variable)) + 
-      geom_bar(stat="identity", position = "dodge") + #dodge -- place bars side-to-side
-      scale_fill_manual(values = c("red","yellow")) + #scale_fill_manual for barplots
-      ggtitle("Kohli vs Dhoni -- Runs by Seasons") +
-      labs(x = "Season", y = "Runs")
-    
-  })
-  output$plot2 = renderPlotly({
+
+  output$dismissal_plot = renderPlotly({
     ggplot(vk_dismissal_long, aes(x = season, y = ..count.. , fill = dismissal_kind)) +
       geom_bar(stat="count") + 
       ggtitle("Kohli -- Dismissals by Seasons") +
       labs(x = "Season", y = "Dismissal Kind")+
       scale_fill_brewer(palette = "Set2")
+  })
+
+  # output$share_plot = renderPlotly({
+  #   ggplot(vk_share, aes(x = factor(1), y = vk_share$Freq, fill = factor(vk_share$Var1))) +
+  #     geom_bar(stat = "identity")+
+  #     coord_polar(theta = "y")+
+  #     ggtitle("Kohli's Run Share")+
+  #     labs(x="", y="")+
+  #     scale_fill_discrete(guide_legend(title = "Run Color"))
+  # })
+  
+  output$team_list = renderDataTable({
+    vk_fav_team[with(vk_fav_team, order(-average_runs_per_ball)),c("opposition", "average_runs_per_ball")]
+  })
+
+  output$bowler_head = renderDataTable({
+    head(vk_fav_bowler[with(vk_fav_bowler, order(-average_against_bowler)),c("bowler", "average_against_bowler")])
     
+  })
+  
+  output$bowler_tail = renderDataTable({
+    tail(vk_fav_bowler[with(vk_fav_bowler, order(-average_against_bowler)),c("bowler", "average_against_bowler")])
+  })
+  
+  output$fav_non_striker = renderDataTable({
+    head(vk_fav_non_striker[with(vk_fav_non_striker, order(-batsman_runs)),])
+  })
+  
+  
+  output$fav_venue = renderDataTable({
+    head(vk_fav_venue[with(vk_fav_venue, order(-batsman_runs)),])
+  })
+  
+  output$strike_rate_plot = renderPlotly({
+    ggplot(vk_over_runs_long, aes(over, value, group = variable, col = variable)) + 
+      geom_point() + geom_smooth()+
+      ggtitle("Strike Rate by Over and Frequency of Overs Played") +
+      labs(x = "Over", y = "Strike Rate/Frequency")
   })
   
   
