@@ -6,8 +6,8 @@ library(ggplot2)
 library(reshape2)
 library(RColorBrewer)
 
-matches = read.csv("../matches.csv", stringsAsFactors = TRUE)
-deliveries = read.csv("../deliveries.csv", stringsAsFactors = TRUE)
+matches = read.csv("matches.csv", stringsAsFactors = TRUE)
+deliveries = read.csv("deliveries.csv", stringsAsFactors = TRUE)
 
 df = merge(matches, deliveries, by.x = "id", by.y = "match_id")
 df$season = as.factor(df$season)
