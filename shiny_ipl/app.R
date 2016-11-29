@@ -15,28 +15,57 @@ df$season = as.factor(df$season)
 batsman_list = as.list(levels(df$batsman))
 names(batsman_list) = levels(df$batsman)
 
-functions_list = c("Dismissals by Seasons", "Strike Rate Plots", "Performance against Teams" , "Favorite Bowlers", "Least Favorite Bowlers", "Favorite Non-Strikers", "Favorite Venue")
+functions_list = c("Runs by Seasons", "Dismissals by Seasons", "Strike Rate Plots", "Performance against Teams" , "Favorite Bowlers", "Least Favorite Bowlers", "Favorite Non-Strikers", "Favorite Venue")
 
 
 ui <- fluidPage(
   
   useShinyjs(),
   
+  titlePanel("IPL Batsmen Analytics"),
+  
+  sidebarPanel(
   selectInput("batsman", "Batsman", choices = batsman_list),
   selectInput("function_name", "Function", choices = functions_list),
   actionButton("button", "Analyze!"),
+  br(),br(),
+  tags$div(class="header", checked=NA,
+           tags$a(href="https://shubh24.github.io", "Check out my blog!")
+  )
+  ),
   
-  # tabPanel(
-  # "Plot",
-  
+  mainPanel(
+    h3("What is this?"),
+    div("My attempt at building an interactive analytics platform for IPL -- Data from all seasons thus far, for all batsmen!"),
+    br(),
+    div("You can analyze runs scored, dismissals, strike rates, favourite bowlers, non-strikers or venues for any batsman.. Go ahead, have fun!"),
+    h3("Thanks to Kaggle!"),
+    tags$div(class="header", checked=NA,
+             tags$p("An awesome dataset available on Kaggle Open Datasets."),
+             tags$a(href="https://www.kaggle.com/manasgarg/ipl", "Show them sove love!")
+    )
+  ),
+
   column(10, plotlyOutput("plot")),
   #plotlyOutput("share_plot"),
 
   column(10, dataTableOutput("list"))
-
+  
 )
 
 server <- function(input, output) {
+  
+  runs = function(vk)({
+    vk_season = aggregate(batsman_runs ~ season, data = vk, FUN = sum)
+    
+    return (renderPlotly(
+      ggplot(vk_season, aes(x=season, y = batsman_runs))+
+        labs(x = "Season", y = "Runs Scored")+
+        ggtitle("Runs by Seasons")+
+        geom_bar(stat="identity", fill="black")
+    ))
+    
+  })
   
   dismissal = function(vk)({
     
@@ -147,17 +176,24 @@ server <- function(input, output) {
     
     vk = subset(df, df$batsman == input$batsman)
     
+    if (input$function_name == "Dismissals by Seasons" | input$function_name == "Strike Rate Plots" | input$function_name == "Runs by Seasons"){
+      hide("list")
+      show("plot")
+    } 
     
     if (input$function_name == "Dismissals by Seasons"){
-      
       output$plot =  dismissal(subset(vk, vk$player_dismissed == input$batsman))
     }
     else if (input$function_name == "Strike Rate Plots"){
       output$plot = strike_rate(vk)
     }
+    else if (input$function_name == "Runs by Seasons"){
+      output$plot = runs(vk)
+    }
+    
     else({
-      toggle("list")
-      toggle("plot")
+      hide("plot")
+      show("list")
       output$list = switch(input$function_name,
                           "Performance against Teams" = team_list(vk),
                           "Favorite Bowlers" = fav_bowler(vk),
