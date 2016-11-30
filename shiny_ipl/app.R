@@ -68,7 +68,7 @@ server <- function(input, output) {
   })
   
   dismissal = function(vk)({
-    
+    print (str(vk))
     vk_dismissal_long = melt(vk)
     
     return (renderPlotly({
@@ -182,7 +182,7 @@ server <- function(input, output) {
     } 
     
     if (input$function_name == "Dismissals by Seasons"){
-      output$plot =  dismissal(subset(vk, vk$player_dismissed == input$batsman))
+      output$plot =  dismissal(subset(vk, vk$player_dismissed == input$batsman)[,c("season", "dismissal_kind")])
     }
     else if (input$function_name == "Strike Rate Plots"){
       output$plot = strike_rate(vk)
